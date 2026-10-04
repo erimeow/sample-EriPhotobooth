@@ -8,7 +8,7 @@ body {
 }
 
 .photobooth-container {
-  max-width: 900px;
+  max-width: 950px;
   margin: 40px auto;
   padding: 30px;
   background: rgba(255, 255, 255, 0.92);
@@ -82,5 +82,69 @@ body {
   100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+  }
+}
+
+/* SIDE-BY-SIDE CAMERA & PREVIEW SIDEBAR */
+.capture-layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.camera-section {
+  flex: 1;
+  min-width: 300px;
+  max-width: 550px;
+}
+
+/* MIRRORED LIVE VIDEO FEED */
+.camera-section video {
+  width: 100%;
+  border-radius: 16px;
+  border: 5px solid #0083b0;
+  box-shadow: 0 8px 25px rgba(0, 131, 176, 0.3);
+  transform: scaleX(-1);
+}
+
+.sidebar-preview {
+  width: 140px;
+  background: rgba(0, 131, 176, 0.05);
+  border: 2px dashed #0083b0;
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #0083b0;
+  margin: 0;
+}
+
+.thumb-img {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

@@ -21,18 +21,15 @@ function App() {
   const stripCanvasRef = useRef(null);
 
   const filterList = [
-    { name: 'Original', css: 'none' },
-    { name: 'Grayscale', css: 'grayscale(100%)' },
-    { name: 'B&W Drama', css: 'grayscale(100%) contrast(200%)' },
-    { name: 'Sepia', css: 'sepia(100%)' },
-    { name: 'Vintage', css: 'sepia(50%) contrast(120%) brightness(90%)' },
-    { name: 'Bright', css: 'brightness(130%)' },
-    { name: 'Contrast', css: 'contrast(160%)' },
-    { name: 'Warm Glow', css: 'sepia(30%) saturate(140%) brightness(105%)' },
-    { name: 'Cool Blue', css: 'hue-rotate(180deg) saturate(120%)' },
-    { name: 'Cyberpunk', css: 'hue-rotate(280deg) saturate(200%) contrast(130%)' },
-    { name: 'Pastel', css: 'saturate(80%) brightness(115%) hue-rotate(340deg)' },
-    { name: 'Vivid', css: 'saturate(250%)' }
+    { id: 'none', name: 'Original' },
+    { id: 'grayscale', name: 'Grayscale' },
+    { id: 'sepia', name: 'Sepia' },
+    { id: 'vintage', name: 'Vintage' },
+    { id: 'bright', name: 'Bright' },
+    { id: 'contrast', name: 'Contrast' },
+    { id: 'cool', name: 'Cool Blue' },
+    { id: 'warm', name: 'Warm Glow' },
+    { id: 'cyberpunk', name: 'Cyberpunk' }
   ];
 
   const frameColors = [
@@ -63,7 +60,7 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg('Hindi mabuksan ang camera. Siguraduhing pinayagan (Allow) mo ang camera permission.');
+      setErrorMsg('Camera Access Denied');
     }
   };
 
@@ -76,6 +73,11 @@ function App() {
       canvas.height = video.videoHeight || 480;
 
       const context = canvas.getContext('2d');
+
+      // Mirror transformation para maging katulad sa live video
+      context.translate(canvas.width, 0);
+      context.scale(-1, 1);
+
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       return canvas.toDataURL('image/png');
@@ -116,11 +118,65 @@ function App() {
     setCurrentPhotoNum(0);
   };
 
+  // HELPER FUNCTION: MANUAL PIXEL FILTER PROCESSING (MOBILE COMPATIBLE)
+  const applyMobilePixelFilter = (ctx, x, y, width, height, filterType) => {
+    if (filterType === 'none') return;
+
+    const imgData = ctx.getImageData(x, y, width, height);
+    const data = imgData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      if (filterType === 'grayscale') {
+        const avg = 0.3 * r + 0.59 * g + 0.11 * b;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      } else if (filterType === 'sepia') {
+        data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+        data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+        data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+      } else if (filterType === 'vintage') {
+        data[i] = Math.min(255, r * 0.4 + g * 0.6 + b * 0.2);
+        data[i + 1] = Math.min(255, r * 0.3 + g * 0.5 + b * 0.2);
+        data[i + 2] = Math.min(255, r * 0.2 + g * 0.3 + b * 0.3);
+      } else if (filterType === 'bright') {
+        data[i] = Math.min(255, r * 1.25);
+        data[i + 1] = Math.min(255, g * 1.25);
+        data[i + 2] = Math.min(255, b * 1.25);
+      } else if (filterType === 'contrast') {
+        const factor = 1.4;
+        data[i] = Math.min(255, Math.max(0, factor * (r - 128) + 128));
+        data[i + 1] = Math.min(255, Math.max(0, factor * (g - 128) + 128));
+        data[i + 2] = Math.min(255, Math.max(0, factor * (b - 128) + 128));
+      } else if (filterType === 'cool') {
+        data[i] = Math.max(0, r - 20);
+        data[i + 1] = g;
+        data[i + 2] = Math.min(255, b + 40);
+      } else if (filterType === 'warm') {
+        data[i] = Math.min(255, r + 30);
+        data[i + 1] = Math.min(255, g + 15);
+        data[i + 2] = Math.max(0, b - 20);
+      } else if (filterType === 'cyberpunk') {
+        data[i] = Math.min(255, r + 50);
+        data[i + 1] = Math.max(0, g - 20);
+        data[i + 2] = Math.min(255, b + 60);
+      }
+    }
+
+    ctx.putImageData(imgData, x, y);
+  };
+
   // CANVAS PHOTO STRIP GENERATION
   const generatePhotoStrip = () => {
     if (photos.length !== targetPhotoCount) return;
 
     const stripCanvas = stripCanvasRef.current;
+    if (!stripCanvas) return;
+
     const ctx = stripCanvas.getContext('2d');
 
     const photoWidth = 400;
@@ -165,7 +221,7 @@ function App() {
           imgElements.forEach((photoImg, i) => {
             const yPos = headerHeight + padding + i * (photoHeight + padding);
 
-            // Polaroid Border Option Extra Spacing
+            // Polaroid Border Option
             if (frameDesign === 'polaroid') {
               ctx.fillStyle = '#ffffff';
               ctx.shadowColor = 'rgba(0,0,0,0.2)';
@@ -174,10 +230,11 @@ function App() {
               ctx.shadowColor = 'transparent';
             }
 
-            ctx.save();
-            ctx.filter = selectedFilter;
+            // Draw Base Image
             ctx.drawImage(photoImg, padding, yPos, photoWidth, photoHeight);
-            ctx.restore();
+
+            // APPLY MOBILE-FRIENDLY PIXEL FILTER
+            applyMobilePixelFilter(ctx, padding, yPos, photoWidth, photoHeight, selectedFilter);
 
             // Neon Border Option
             if (frameDesign === 'neon') {
@@ -265,11 +322,13 @@ function App() {
         </div>
       )}
 
-      {/* STEP 2: LIVE CAMERA STREAM WITH ANIMATED TIMER */}
+      {/* STEP 2: LIVE CAMERA STREAM WITH SIDEBAR PREVIEW */}
       {isCameraOpen && photos.length < targetPhotoCount && (
         <div style={{ marginTop: '20px' }}>
           {errorMsg ? (
-            <p style={{ color: 'red', fontWeight: 'bold' }}>{errorMsg}</p>
+            <p style={{ color: '#dc3545', fontWeight: 'bold', fontSize: '20px', marginTop: '30px' }}>
+              {errorMsg}
+            </p>
           ) : (
             <div>
               {currentPhotoNum > 0 && (
@@ -278,26 +337,43 @@ function App() {
                 </h2>
               )}
 
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  style={{
-                    width: '90%',
-                    maxWidth: '520px',
-                    borderRadius: '16px',
-                    border: '5px solid #0083b0',
-                    boxShadow: '0 8px 25px rgba(0,131,176,0.3)'
-                  }}
-                />
+              <div className="capture-layout">
+                {/* CAMERA STREAM */}
+                <div className="camera-section">
+                  <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                    />
 
-                {/* ANIMATED COUNTDOWN EFFECT */}
-                {countdown !== null && (
-                  <div className="countdown-animated">
-                    {countdown}
+                    {/* ANIMATED COUNTDOWN EFFECT */}
+                    {countdown !== null && (
+                      <div className="countdown-animated">
+                        {countdown}
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                {/* SIDEBAR: RECENTLY CAPTURED PHOTOS */}
+                <div className="sidebar-preview">
+                  <p className="sidebar-title">Shots ({photos.length}/{targetPhotoCount})</p>
+                  {photos.length === 0 ? (
+                    <span style={{ fontSize: '12px', color: '#888', marginTop: '20px' }}>
+                      Captured photos will appear here
+                    </span>
+                  ) : (
+                    photos.map((photo, index) => (
+                      <img 
+                        key={index} 
+                        src={photo} 
+                        alt={`Captured shot ${index + 1}`} 
+                        className="thumb-img"
+                      />
+                    ))
+                  )}
+                </div>
               </div>
 
               <canvas ref={canvasRef} style={{ display: 'none' }} />
@@ -321,10 +397,6 @@ function App() {
               >
                 {currentPhotoNum > 0 ? 'Capturing...' : `Start ${targetPhotoCount}-Photo Shoot`}
               </button>
-
-              <p style={{ marginTop: '10px', fontSize: '16px', color: '#555' }}>
-                Captured: <strong>{photos.length} / {targetPhotoCount}</strong>
-              </p>
             </div>
           )}
         </div>
@@ -338,9 +410,9 @@ function App() {
             <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>1. Photo Filter:</h3>
             {filterList.map((filter) => (
               <button
-                key={filter.name}
-                onClick={() => setSelectedFilter(filter.css)}
-                className={`btn-option ${selectedFilter === filter.css ? 'active' : ''}`}
+                key={filter.id}
+                onClick={() => setSelectedFilter(filter.id)}
+                className={`btn-option ${selectedFilter === filter.id ? 'active' : ''}`}
               >
                 {filter.name}
               </button>
@@ -397,7 +469,7 @@ function App() {
                 />
               </div>
 
-              {/* ACTION BUTTONS (CLEAN TEXT, NO EMOJIS) */}
+              {/* ACTION BUTTONS */}
               <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
                 <a 
                   href={stripImage} 
