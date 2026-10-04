@@ -10,7 +10,7 @@ function App() {
   const [targetPhotoCount, setTargetPhotoCount] = useState(3);
   const [selectedFilter, setSelectedFilter] = useState('none');
   const [frameColor, setFrameColor] = useState('#ffffff');
-  const [frameDesign, setFrameDesign] = useState('classic');
+  const [frameDesign, setFrameDesign] = useState('bows');
 
   const [photos, setPhotos] = useState([]);
   const [currentPhotoNum, setCurrentPhotoNum] = useState(0);
@@ -20,31 +20,32 @@ function App() {
   const canvasRef = useRef(null);
   const stripCanvasRef = useRef(null);
 
+  // AESTHETIC FILTERS
   const filterList = [
     { id: 'none', name: 'Original' },
-    { id: 'grayscale', name: 'Grayscale' },
-    { id: 'sepia', name: 'Sepia' },
-    { id: 'vintage', name: 'Vintage' },
-    { id: 'bright', name: 'Bright' },
-    { id: 'contrast', name: 'Contrast' },
-    { id: 'cool', name: 'Cool Blue' },
-    { id: 'warm', name: 'Warm Glow' },
-    { id: 'cyberpunk', name: 'Cyberpunk' }
+    { id: 'korean_pastel', name: 'Korean Soft Pastel' },
+    { id: 'y2k_glow', name: 'Y2K Gloss Glow' },
+    { id: 'film_noir', name: 'Film Noir (High B&W)' },
+    { id: 'lofi_retro', name: 'Lofi Muted Retro' },
+    { id: 'cyber_pink', name: 'Cyber Pink Vibe' },
+    { id: 'emerald_teal', name: 'Emerald Cinematic' }
   ];
 
   const frameColors = [
     { name: 'Classic White', hex: '#ffffff' },
-    { name: 'Cyan Blue', hex: '#e0f7fa' },
-    { name: 'Midnight Black', hex: '#111111' },
-    { name: 'Pastel Pink', hex: '#ffd1dc' },
-    { name: 'Retro Cream', hex: '#fbf0d9' }
+    { name: 'Pitch Black', hex: '#111111' },
+    { name: 'Baby Pink', hex: '#fce7f3' },
+    { name: 'Pastel Lavender', hex: '#e9d5ff' },
+    { name: 'Matcha Green', hex: '#dcfce7' },
+    { name: 'Soft Cyan', hex: '#e0f7fa' }
   ];
 
+  // STICKER FRAME DESIGNS
   const frameDesignList = [
-    { id: 'classic', name: 'Classic Clean' },
-    { id: 'polaroid', name: 'Polaroid Style' },
-    { id: 'dots', name: 'Polka Dots' },
-    { id: 'neon', name: 'Neon Glow Border' }
+    { id: 'bows', name: '🎀 Ribbon Bows' },
+    { id: 'sparkles', name: '✨ Y2K Sparkles & Hearts' },
+    { id: 'catpaws', name: '🐱 Cat Paws & Whiskers' },
+    { id: 'cherries', name: '🍒 Cherries & Daisies' }
   ];
 
   const startCamera = async () => {
@@ -74,7 +75,7 @@ function App() {
 
       const context = canvas.getContext('2d');
 
-      // Mirror transformation para maging katulad sa live video
+      // Mirror canvas transformation
       context.translate(canvas.width, 0);
       context.scale(-1, 1);
 
@@ -118,7 +119,7 @@ function App() {
     setCurrentPhotoNum(0);
   };
 
-  // HELPER FUNCTION: MANUAL PIXEL FILTER PROCESSING (MOBILE COMPATIBLE)
+  // MOBILE-COMPATIBLE CUSTOM PIXEL FILTER ALGORITHMS
   const applyMobilePixelFilter = (ctx, x, y, width, height, filterType) => {
     if (filterType === 'none') return;
 
@@ -130,44 +131,81 @@ function App() {
       let g = data[i + 1];
       let b = data[i + 2];
 
-      if (filterType === 'grayscale') {
-        const avg = 0.3 * r + 0.59 * g + 0.11 * b;
-        data[i] = avg;
-        data[i + 1] = avg;
-        data[i + 2] = avg;
-      } else if (filterType === 'sepia') {
-        data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-        data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-        data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
-      } else if (filterType === 'vintage') {
-        data[i] = Math.min(255, r * 0.4 + g * 0.6 + b * 0.2);
-        data[i + 1] = Math.min(255, r * 0.3 + g * 0.5 + b * 0.2);
-        data[i + 2] = Math.min(255, r * 0.2 + g * 0.3 + b * 0.3);
-      } else if (filterType === 'bright') {
-        data[i] = Math.min(255, r * 1.25);
-        data[i + 1] = Math.min(255, g * 1.25);
-        data[i + 2] = Math.min(255, b * 1.25);
-      } else if (filterType === 'contrast') {
-        const factor = 1.4;
-        data[i] = Math.min(255, Math.max(0, factor * (r - 128) + 128));
-        data[i + 1] = Math.min(255, Math.max(0, factor * (g - 128) + 128));
-        data[i + 2] = Math.min(255, Math.max(0, factor * (b - 128) + 128));
-      } else if (filterType === 'cool') {
-        data[i] = Math.max(0, r - 20);
-        data[i + 1] = g;
-        data[i + 2] = Math.min(255, b + 40);
-      } else if (filterType === 'warm') {
-        data[i] = Math.min(255, r + 30);
-        data[i + 1] = Math.min(255, g + 15);
-        data[i + 2] = Math.max(0, b - 20);
-      } else if (filterType === 'cyberpunk') {
-        data[i] = Math.min(255, r + 50);
-        data[i + 1] = Math.max(0, g - 20);
-        data[i + 2] = Math.min(255, b + 60);
+      if (filterType === 'korean_pastel') {
+        data[i] = Math.min(255, r * 1.15 + 15);
+        data[i + 1] = Math.min(255, g * 1.08 + 10);
+        data[i + 2] = Math.min(255, b * 1.1 + 15);
+      } else if (filterType === 'y2k_glow') {
+        data[i] = Math.min(255, r * 1.25 + 20);
+        data[i + 1] = Math.min(255, g * 1.05);
+        data[i + 2] = Math.min(255, b * 1.15 + 10);
+      } else if (filterType === 'film_noir') {
+        const avg = 0.299 * r + 0.587 * g + 0.114 * b;
+        const contrastFactor = 1.6;
+        const result = Math.min(255, Math.max(0, contrastFactor * (avg - 128) + 128));
+        data[i] = result;
+        data[i + 1] = result;
+        data[i + 2] = result;
+      } else if (filterType === 'lofi_retro') {
+        data[i] = Math.min(255, r * 1.1 + 10);
+        data[i + 1] = Math.min(255, g * 0.95 + 5);
+        data[i + 2] = Math.max(0, b * 0.8);
+      } else if (filterType === 'cyber_pink') {
+        data[i] = Math.min(255, r * 1.3 + 30);
+        data[i + 1] = Math.max(0, g * 0.85);
+        data[i + 2] = Math.min(255, b * 1.2 + 20);
+      } else if (filterType === 'emerald_teal') {
+        data[i] = Math.max(0, r * 0.85);
+        data[i + 1] = Math.min(255, g * 1.15 + 15);
+        data[i + 2] = Math.min(255, b * 1.1 + 10);
       }
     }
 
     ctx.putImageData(imgData, x, y);
+  };
+
+  // DRAW STICKERS OVERLAY FUNCTION
+  const drawStickerOverlay = (ctx, design, x, y, width, height) => {
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (design === 'bows') {
+      ctx.font = '28px serif';
+      // Bows at top corners
+      ctx.fillText('🎀', x - 2, y - 2);
+      ctx.fillText('🎀', x + width + 2, y - 2);
+      ctx.fillText('🎀', x + width / 2, y - 8);
+
+      // Pearl dots on sides
+      ctx.fillStyle = '#ffb6c1';
+      for (let py = y + 20; py < y + height; py += 30) {
+        ctx.beginPath();
+        ctx.arc(x - 10, py, 3, 0, Math.PI * 2);
+        ctx.arc(x + width + 10, py, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (design === 'sparkles') {
+      ctx.font = '24px serif';
+      ctx.fillText('💖', x - 6, y - 6);
+      ctx.fillText('✨', x + width + 6, y - 6);
+      ctx.fillText('✨', x - 6, y + height + 6);
+      ctx.fillText('💖', x + width + 6, y + height + 6);
+      ctx.fillText('⭐', x + width / 2, y - 8);
+    } else if (design === 'catpaws') {
+      ctx.font = '22px serif';
+      ctx.fillText('🐾', x - 8, y + 15);
+      ctx.fillText('🐾', x + width + 8, y + height - 15);
+      ctx.fillText('🐱', x + width / 2, y - 8);
+      ctx.fillText('🐾', x - 8, y + height - 15);
+      ctx.fillText('🐾', x + width + 8, y + 15);
+    } else if (design === 'cherries') {
+      ctx.font = '24px serif';
+      ctx.fillText('🍒', x - 6, y - 6);
+      ctx.fillText('🌼', x + width + 6, y - 6);
+      ctx.fillText('🌼', x - 6, y + height + 6);
+      ctx.fillText('🍒', x + width + 6, y + height + 6);
+      ctx.fillText('🌸', x + width / 2, y - 8);
+    }
   };
 
   // CANVAS PHOTO STRIP GENERATION
@@ -181,9 +219,9 @@ function App() {
 
     const photoWidth = 400;
     const photoHeight = 300;
-    const padding = 20;
-    const headerHeight = 20;
-    const footerHeight = 80;
+    const padding = 35; // Extra space for cute stickers
+    const headerHeight = 25;
+    const footerHeight = 85;
 
     const canvasWidth = photoWidth + (padding * 2);
     const canvasHeight = headerHeight + (photoHeight * targetPhotoCount) + (padding * (targetPhotoCount + 1)) + footerHeight;
@@ -191,21 +229,9 @@ function App() {
     stripCanvas.width = canvasWidth;
     stripCanvas.height = canvasHeight;
 
-    // 1. Draw Background Base
+    // 1. Base Frame Background
     ctx.fillStyle = frameColor;
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-    // 2. Draw Frame Pattern Overlay
-    if (frameDesign === 'dots') {
-      ctx.fillStyle = frameColor === '#111111' ? 'rgba(255,255,255,0.15)' : 'rgba(0,131,176,0.15)';
-      for (let x = 10; x < canvasWidth; x += 25) {
-        for (let y = 10; y < canvasHeight; y += 25) {
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
 
     let loadedCount = 0;
     const imgElements = [];
@@ -221,35 +247,26 @@ function App() {
           imgElements.forEach((photoImg, i) => {
             const yPos = headerHeight + padding + i * (photoHeight + padding);
 
-            // Polaroid Border Option
-            if (frameDesign === 'polaroid') {
-              ctx.fillStyle = '#ffffff';
-              ctx.shadowColor = 'rgba(0,0,0,0.2)';
-              ctx.shadowBlur = 10;
-              ctx.fillRect(padding - 8, yPos - 8, photoWidth + 16, photoHeight + 16);
-              ctx.shadowColor = 'transparent';
-            }
+            // Draw Inner Border / Shadow
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0,0,0,0.15)';
+            ctx.shadowBlur = 8;
+            ctx.fillRect(padding - 4, yPos - 4, photoWidth + 8, photoHeight + 8);
+            ctx.shadowColor = 'transparent';
 
-            // Draw Base Image
+            // Draw Base Photo
             ctx.drawImage(photoImg, padding, yPos, photoWidth, photoHeight);
 
-            // APPLY MOBILE-FRIENDLY PIXEL FILTER
+            // Apply Selected Pixel Filter
             applyMobilePixelFilter(ctx, padding, yPos, photoWidth, photoHeight, selectedFilter);
 
-            // Neon Border Option
-            if (frameDesign === 'neon') {
-              ctx.strokeStyle = '#00f2fe';
-              ctx.lineWidth = 4;
-              ctx.shadowColor = '#00f2fe';
-              ctx.shadowBlur = 12;
-              ctx.strokeRect(padding, yPos, photoWidth, photoHeight);
-              ctx.shadowColor = 'transparent';
-            }
+            // Draw Cute Stickers Overlay
+            drawStickerOverlay(ctx, frameDesign, padding, yPos, photoWidth, photoHeight);
           });
 
-          // 3. Draw ERI PHOTOBOOTH Footer Text
-          ctx.fillStyle = frameColor === '#111111' ? '#00f2fe' : '#0083b0';
-          ctx.font = 'bold 20px sans-serif';
+          // Footer Branding
+          ctx.fillStyle = frameColor === '#111111' ? '#ffffff' : '#0083b0';
+          ctx.font = 'bold 22px sans-serif';
           ctx.textAlign = 'center';
 
           const dateStr = new Date().toLocaleDateString('en-US', {
@@ -258,9 +275,9 @@ function App() {
             day: 'numeric'
           });
 
-          ctx.fillText('ERI PHOTOBOOTH', canvasWidth / 2, canvasHeight - 45);
-          ctx.font = '14px sans-serif';
-          ctx.fillText(dateStr, canvasWidth / 2, canvasHeight - 20);
+          ctx.fillText('ERI PHOTOBOOTH', canvasWidth / 2, canvasHeight - 48);
+          ctx.font = '13px monospace';
+          ctx.fillText(`• ${dateStr} •`, canvasWidth / 2, canvasHeight - 22);
 
           setStripImage(stripCanvas.toDataURL('image/png'));
         }
@@ -286,7 +303,7 @@ function App() {
       {!isCameraOpen && (
         <div>
           <p style={{ fontSize: '18px', color: '#555' }}>
-            Pick your photoshoot length and click start!
+            Select shots count & start your photoshoot session!
           </p>
 
           <div className="option-group">
@@ -407,7 +424,7 @@ function App() {
         <div style={{ marginTop: '20px' }}>
           {/* FILTER OPTIONS */}
           <div className="option-group">
-            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>1. Photo Filter:</h3>
+            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>1. Aesthetic Photo Filter:</h3>
             {filterList.map((filter) => (
               <button
                 key={filter.id}
@@ -419,9 +436,9 @@ function App() {
             ))}
           </div>
 
-          {/* FRAME DESIGN STYLE OPTIONS */}
+          {/* STICKER FRAME DESIGN OPTIONS */}
           <div className="option-group">
-            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>2. Frame Design Style:</h3>
+            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>2. Cute Sticker Frame Design:</h3>
             {frameDesignList.map((design) => (
               <button
                 key={design.id}
