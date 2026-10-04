@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
+import { Camera } from 'lucide-react';
 
 function App() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -422,7 +423,14 @@ function App() {
                   fontWeight: 'bold'
                 }}
               >
-                {currentPhotoNum > 0 ? 'Capturing...' : `Start ${targetPhotoCount}-Photo Shoot`}
+                {currentPhotoNum > 0 ? (
+                  'Capturing...'
+                ) : (
+                  <>
+                  <Camera size={20} />
+                  Start Capture
+                  </>
+                )}
               </button>
             </div>
           )}
