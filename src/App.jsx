@@ -8,7 +8,7 @@ function App() {
 
   // USER CHOICES
   const [targetPhotoCount, setTargetPhotoCount] = useState(3);
-  const [selectedFilter, setSelectedFilter] = useState('none');
+  const [selectedFilter, setSelectedFilter] = useState('normal');
   const [frameColor, setFrameColor] = useState('#ffffff');
   const [frameDesign, setFrameDesign] = useState('bows');
 
@@ -20,15 +20,16 @@ function App() {
   const canvasRef = useRef(null);
   const stripCanvasRef = useRef(null);
 
-  // AESTHETIC FILTERS
+  // CUSTOM SPECIFIED FILTERS
   const filterList = [
-    { id: 'none', name: 'Original' },
-    { id: 'korean_pastel', name: 'Korean Soft Pastel' },
-    { id: 'y2k_glow', name: 'Y2K Gloss Glow' },
-    { id: 'film_noir', name: 'Film Noir (High B&W)' },
-    { id: 'lofi_retro', name: 'Lofi Muted Retro' },
-    { id: 'cyber_pink', name: 'Cyber Pink Vibe' },
-    { id: 'emerald_teal', name: 'Emerald Cinematic' }
+    { id: 'normal', name: 'Normal' },
+    { id: 'soft', name: 'Soft' },
+    { id: 'n10', name: 'N10' },
+    { id: 'mellow', name: 'Mellow' },
+    { id: 'brighten', name: 'Brighten' },
+    { id: 'lumiskin', name: 'LumiSkin' },
+    { id: 'bw', name: 'B&W' },
+    { id: 'bright', name: 'Bright' }
   ];
 
   const frameColors = [
@@ -119,9 +120,9 @@ function App() {
     setCurrentPhotoNum(0);
   };
 
-  // MOBILE-COMPATIBLE CUSTOM PIXEL FILTER ALGORITHMS
+  // CUSTOM PIXEL FILTERS ALGORITHM
   const applyMobilePixelFilter = (ctx, x, y, width, height, filterType) => {
-    if (filterType === 'none') return;
+    if (filterType === 'normal') return;
 
     const imgData = ctx.getImageData(x, y, width, height);
     const data = imgData.data;
@@ -131,80 +132,89 @@ function App() {
       let g = data[i + 1];
       let b = data[i + 2];
 
-      if (filterType === 'korean_pastel') {
-        data[i] = Math.min(255, r * 1.15 + 15);
-        data[i + 1] = Math.min(255, g * 1.08 + 10);
-        data[i + 2] = Math.min(255, b * 1.1 + 15);
-      } else if (filterType === 'y2k_glow') {
-        data[i] = Math.min(255, r * 1.25 + 20);
-        data[i + 1] = Math.min(255, g * 1.05);
-        data[i + 2] = Math.min(255, b * 1.15 + 10);
-      } else if (filterType === 'film_noir') {
-        const avg = 0.299 * r + 0.587 * g + 0.114 * b;
-        const contrastFactor = 1.6;
-        const result = Math.min(255, Math.max(0, contrastFactor * (avg - 128) + 128));
-        data[i] = result;
-        data[i + 1] = result;
-        data[i + 2] = result;
-      } else if (filterType === 'lofi_retro') {
+      if (filterType === 'soft') {
+        // Soft pastel glow
+        data[i] = Math.min(255, r * 1.1 + 15);
+        data[i + 1] = Math.min(255, g * 1.05 + 10);
+        data[i + 2] = Math.min(255, b * 1.08 + 15);
+      } else if (filterType === 'n10') {
+        // Cool modern tone
+        data[i] = Math.max(0, r * 0.95);
+        data[i + 1] = Math.min(255, g * 1.05 + 5);
+        data[i + 2] = Math.min(255, b * 1.18 + 15);
+      } else if (filterType === 'mellow') {
+        // Vintage warm muted
         data[i] = Math.min(255, r * 1.1 + 10);
-        data[i + 1] = Math.min(255, g * 0.95 + 5);
-        data[i + 2] = Math.max(0, b * 0.8);
-      } else if (filterType === 'cyber_pink') {
-        data[i] = Math.min(255, r * 1.3 + 30);
-        data[i + 1] = Math.max(0, g * 0.85);
-        data[i + 2] = Math.min(255, b * 1.2 + 20);
-      } else if (filterType === 'emerald_teal') {
-        data[i] = Math.max(0, r * 0.85);
-        data[i + 1] = Math.min(255, g * 1.15 + 15);
-        data[i + 2] = Math.min(255, b * 1.1 + 10);
+        data[i + 1] = Math.min(255, g * 0.98 + 5);
+        data[i + 2] = Math.max(0, b * 0.85);
+      } else if (filterType === 'brighten') {
+        // Lift exposure and brightness
+        data[i] = Math.min(255, r * 1.15 + 20);
+        data[i + 1] = Math.min(255, g * 1.15 + 20);
+        data[i + 2] = Math.min(255, b * 1.15 + 20);
+      } else if (filterType === 'lumiskin') {
+        // Rosy skin glow effect
+        data[i] = Math.min(255, r * 1.22 + 25);
+        data[i + 1] = Math.min(255, g * 1.05 + 8);
+        data[i + 2] = Math.min(255, b * 1.12 + 15);
+      } else if (filterType === 'bw') {
+        // Classic B&W
+        const avg = 0.299 * r + 0.587 * g + 0.114 * b;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      } else if (filterType === 'bright') {
+        // High saturation & vivid contrast
+        data[i] = Math.min(255, r * 1.3);
+        data[i + 1] = Math.min(255, g * 1.25);
+        data[i + 2] = Math.min(255, b * 1.25);
       }
     }
 
     ctx.putImageData(imgData, x, y);
   };
 
-  // DRAW STICKERS OVERLAY FUNCTION
+  // DRAW LARGER & PROPORTIONAL STICKERS OVERLAY
   const drawStickerOverlay = (ctx, design, x, y, width, height) => {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     if (design === 'bows') {
-      ctx.font = '28px serif';
-      // Bows at top corners
-      ctx.fillText('🎀', x - 2, y - 2);
-      ctx.fillText('🎀', x + width + 2, y - 2);
-      ctx.fillText('🎀', x + width / 2, y - 8);
+      ctx.font = '40px serif';
+      // Big Bows at top corners & top center
+      ctx.fillText('🎀', x + 10, y + 10);
+      ctx.fillText('🎀', x + width - 10, y + 10);
+      ctx.fillText('🎀', x + width / 2, y - 10);
 
       // Pearl dots on sides
       ctx.fillStyle = '#ffb6c1';
-      for (let py = y + 20; py < y + height; py += 30) {
+      for (let py = y + 40; py < y + height - 20; py += 45) {
         ctx.beginPath();
-        ctx.arc(x - 10, py, 3, 0, Math.PI * 2);
-        ctx.arc(x + width + 10, py, 3, 0, Math.PI * 2);
+        ctx.arc(x - 15, py, 5, 0, Math.PI * 2);
+        ctx.arc(x + width + 15, py, 5, 0, Math.PI * 2);
         ctx.fill();
       }
     } else if (design === 'sparkles') {
-      ctx.font = '24px serif';
-      ctx.fillText('💖', x - 6, y - 6);
-      ctx.fillText('✨', x + width + 6, y - 6);
-      ctx.fillText('✨', x - 6, y + height + 6);
-      ctx.fillText('💖', x + width + 6, y + height + 6);
-      ctx.fillText('⭐', x + width / 2, y - 8);
+      ctx.font = '38px serif';
+      ctx.fillText('💖', x - 5, y - 5);
+      ctx.fillText('✨', x + width + 5, y - 5);
+      ctx.fillText('✨', x - 5, y + height + 5);
+      ctx.fillText('💖', x + width + 5, y + height + 5);
+      ctx.fillText('⭐', x + width / 2, y - 12);
     } else if (design === 'catpaws') {
-      ctx.font = '22px serif';
-      ctx.fillText('🐾', x - 8, y + 15);
-      ctx.fillText('🐾', x + width + 8, y + height - 15);
-      ctx.fillText('🐱', x + width / 2, y - 8);
-      ctx.fillText('🐾', x - 8, y + height - 15);
-      ctx.fillText('🐾', x + width + 8, y + 15);
+      ctx.font = '36px serif';
+      ctx.fillText('🐾', x - 10, y + 25);
+      ctx.fillText('🐾', x + width + 10, y + height - 25);
+      ctx.fillText('🐱', x + width / 2, y - 10);
+      ctx.fillText('🐾', x - 10, y + height - 25);
+      ctx.fillText('🐾', x + width + 10, y + 25);
     } else if (design === 'cherries') {
-      ctx.font = '24px serif';
-      ctx.fillText('🍒', x - 6, y - 6);
-      ctx.fillText('🌼', x + width + 6, y - 6);
-      ctx.fillText('🌼', x - 6, y + height + 6);
-      ctx.fillText('🍒', x + width + 6, y + height + 6);
-      ctx.fillText('🌸', x + width / 2, y - 8);
+      ctx.font = '38px serif';
+      ctx.fillText('🍒', x - 5, y - 5);
+      ctx.fillText('🌼', x + width + 5, y - 5);
+      ctx.fillText('🌼', x - 5, y + height + 5);
+      ctx.fillText('🍒', x + width + 5, y + height + 5);
+      ctx.fillText('🌸', x + width / 2, y - 10);
     }
   };
 
@@ -219,8 +229,8 @@ function App() {
 
     const photoWidth = 400;
     const photoHeight = 300;
-    const padding = 35; // Extra space for cute stickers
-    const headerHeight = 25;
+    const padding = 45; // Increased padding for big stickers
+    const headerHeight = 30;
     const footerHeight = 85;
 
     const canvasWidth = photoWidth + (padding * 2);
@@ -260,7 +270,7 @@ function App() {
             // Apply Selected Pixel Filter
             applyMobilePixelFilter(ctx, padding, yPos, photoWidth, photoHeight, selectedFilter);
 
-            // Draw Cute Stickers Overlay
+            // Draw Cute Stickers Overlay (Larger Size)
             drawStickerOverlay(ctx, frameDesign, padding, yPos, photoWidth, photoHeight);
           });
 
@@ -424,7 +434,7 @@ function App() {
         <div style={{ marginTop: '20px' }}>
           {/* FILTER OPTIONS */}
           <div className="option-group">
-            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>1. Aesthetic Photo Filter:</h3>
+            <h3 style={{ margin: '0 0 10px 0', color: '#0083b0' }}>1. Photo Filter:</h3>
             {filterList.map((filter) => (
               <button
                 key={filter.id}
